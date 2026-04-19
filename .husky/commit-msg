@@ -1,1 +1,9 @@
-pnpm exec commitlint --edit "$1"
+if ! pnpm exec commitlint --edit "$1" --verbose; then
+  echo ""
+  echo "✖ Commit rejected: message does not follow Conventional Commits format."
+  echo "  Expected format: <type>(<scope>): <subject>"
+  echo "  Example:         feat(auth): add login page"
+  echo "  Types: feat | fix | chore | docs | style | refactor | test | perf | ci | build | revert"
+  echo ""
+  exit 1
+fi
