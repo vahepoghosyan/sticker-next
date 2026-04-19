@@ -1,0 +1,33 @@
+protected_branches="main develop"
+current_branch=$(git symbolic-ref HEAD | sed 's|refs/heads/||')
+
+# Branch naming rule: must match one of the allowed patterns
+valid_pattern="^(feature|fix|chore|docs|refactor|test|hotfix)/.+"
+
+if ! echo "$current_branch" | grep -qE "$valid_pattern"; then
+  # Skip check for protected branches (handled below)
+  is_protected=false
+  for b in $protected_branches; do
+    [ "$current_branch" = "$b" ] && is_protected=true
+  done
+
+  if [ "$is_protected" = false ]; then
+    echo ""
+    echo "✖ Branch name '$current_branch' does not follow the naming convention."
+    echo "  Required format: <type>/<description>"
+    echo "  Allowed types:   feature | fix | chore | docs | refactor | test | hotfix"
+    echo "  Example:         feature/login-page"
+    echo ""
+    exit 1
+  fi
+fi
+
+for branch in $protected_branches; do
+  if [ "$current_branch" = "$branch" ]; then
+    echo ""
+    echo "✖ Direct push to '$branch' is not allowed."
+    echo "  Create a feature branch and open a pull request instead."
+    echo ""
+    exit 1
+  fi
+done
