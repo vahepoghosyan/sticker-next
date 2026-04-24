@@ -1,4 +1,4 @@
-export type StickerNote = {
+export type Sticker = {
   id: string;
   x: number;
   y: number;
@@ -6,6 +6,6 @@ export type StickerNote = {
   zIndex: number;
 };
 
-export type StickerProps = StickerNote & {
+export type StickerProps = Sticker & {
   onActivate: (id: string) => () => void;
 };
