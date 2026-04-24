@@ -31,3 +31,36 @@ for branch in $protected_branches; do
     exit 1
   fi
 done
+
+# Auto version bump based on branch prefix
+branch_type=$(echo "$current_branch" | sed 's|/.*||')
+
+case "$branch_type" in
+  hotfix)
+    bump="patch"
+    ;;
+  fix)
+    bump="patch"
+    ;;
+  feature)
+    bump="minor"
+    ;;
+  refactor|chore|docs|test)
+    bump=""
+    ;;
+  *)
+    bump=""
+    ;;
+esac
+
+if [ -n "$bump" ]; then
+  echo ""
+  echo "→ Auto-bumping version ($bump) for branch type '$branch_type'..."
+  npm version "$bump" --no-git-tag-version
+  new_version=$(node -p "require('./package.json').version")
+  git add package.json
+  git commit -m "chore: bump version to v$new_version"
+  git tag "v$new_version"
+  echo "✔ Version bumped to v$new_version and tagged."
+  echo ""
+fi
