@@ -24,30 +24,27 @@ function Sticker({
   });
 
   const toggleEditingTitle = () => {
-    setIsTitleEditEnabled((prev) => {
-      const next = !prev;
-      if (next) {
-        setTimeout(() => {
-          titleRef.current?.focus();
-          document.addEventListener("pointerdown", handleOutsideClick);
-        }, 0);
-      }
-      return next;
-    });
+    setIsTitleEditEnabled((prev) => !prev);
   };
 
   const handleOutsideClick = useCallback((e: PointerEvent) => {
     if (titleWrapperRef.current && !titleWrapperRef.current.contains(e.target as Node)) {
       setIsTitleEditEnabled(false);
-      document.removeEventListener("pointerdown", handleOutsideClick);
     }
   }, []);
 
   useEffect(() => {
+    if (isTitleEditEnabled) {
+      setTimeout(() => titleRef.current?.focus(), 0);
+      document.addEventListener("pointerdown", handleOutsideClick);
+    } else {
+      document.removeEventListener("pointerdown", handleOutsideClick);
+    }
+
     return () => {
       document.removeEventListener("pointerdown", handleOutsideClick);
     };
-  }, []);
+  }, [isTitleEditEnabled, handleOutsideClick]);
 
   return (
     <div
@@ -74,7 +71,7 @@ function Sticker({
             value={title}
             disabled={!isTitleEditEnabled}
             className="bg-transparent w-full px-2 font-sans text-[16px] font-bold text-white outline-none disabled:pointer-events-none"
-            onChange={onUpdate(id, 'title')}
+            onChange={onUpdate(id, "title")}
           />
         </div>
         <button
@@ -111,7 +108,7 @@ function Sticker({
       <textarea
         className="block h-[calc(100%-34px)] w-full resize-none border-2 border-t-0 border-[rgba(70,74,84,0.34)] bg-[#1b1d1d82] p-5 backdrop-blur-[10px] focus:outline-none"
         value={content}
-        onChange={onUpdate(id, 'content')}
+        onChange={onUpdate(id, "content")}
       />
 
       <button

@@ -8,7 +8,7 @@ export interface Stickers {
 type StickerStore = {
   stickers: Stickers;
   addSticker: (sticker: Sticker) => void;
-  updateSticker: (id: string, updates: Partial<Sticker>) => void;
+  updateSticker: (id: string, updates: Partial<Omit<Sticker, "id">>) => void;
   removeSticker: (id: string) => void;
 };
 
@@ -21,7 +21,7 @@ export const useStickerStore = create<StickerStore>((set) => ({
         [sticker.id]: sticker,
       },
     })),
-  updateSticker: (id: string, updates: Partial<Sticker>) =>
+  updateSticker: (id: string, updates: Partial<Omit<Sticker, "id">>) =>
     set((state) => ({
       stickers: {
         ...state.stickers,

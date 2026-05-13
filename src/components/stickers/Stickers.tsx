@@ -5,7 +5,6 @@ import { useStickerStore } from "@/features/stickers/store";
 import { useShallow } from "zustand/react/shallow";
 
 import { useCallback } from "react";
-import { type Sticker as StickerType } from "@/types/sticker";
 import {
   MIN_STICKER_X,
   MIN_STICKER_Y,
