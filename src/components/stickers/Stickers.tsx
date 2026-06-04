@@ -4,7 +4,7 @@ import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
 import { useStickerStore } from "@/features/stickers/store";
 import { useShallow } from "zustand/react/shallow";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import {
     MIN_STICKER_X,
     MIN_STICKER_Y,
@@ -13,16 +13,24 @@ import {
     VIEWPORT_MARGIN,
 } from "@/constants/sticker";
 import Sticker from "./sticker/Sticker";
+import { type Note } from "@/types/sticker";
 
 function Stickers() {
-    const { stickers, addSticker, updateSticker, removeSticker } = useStickerStore(
+    const { stickers, addSticker, updateSticker, removeSticker, fetchStickers } = useStickerStore(
         useShallow((s) => ({
             stickers: s.stickers,
             addSticker: s.addSticker,
             updateSticker: s.updateSticker,
             removeSticker: s.removeSticker,
+            fetchStickers: s.fetchStickers,
         }))
     );
+
+    useEffect(() => {
+        fetchStickers();
+    }, [fetchStickers]);
+
+    console.log("🚀 ~ Stickers ~ stickers:", stickers);
 
     const bringToFront = useCallback(
         (id: string) => () => {
@@ -57,8 +65,8 @@ function Stickers() {
             const sticker = stickers[sourceId];
 
             updateSticker(sourceId, {
-                x: Math.min(maxX, Math.max(MIN_STICKER_X, sticker.x + x)),
-                y: Math.min(maxY, Math.max(MIN_STICKER_Y, sticker.y + y)),
+                positionX: Math.min(maxX, Math.max(MIN_STICKER_X, sticker.positionX + x)),
+                positionY: Math.min(maxY, Math.max(MIN_STICKER_Y, sticker.positionY + y)),
             });
         },
         [stickers, updateSticker]
@@ -79,16 +87,29 @@ function Stickers() {
         [updateSticker]
     );
 
-    const handleAdd = useCallback(() => {
-        const newId = Date.now().toString();
+    const handleAdd = useCallback(async () => {
+        console.log("🚀 ~ handleAdd ~ stickers:", stickers);
+        const x = window.innerWidth / 2 - STICKER_WIDTH / 2;
+        const y = window.innerHeight / 2 - STICKER_HEIGHT / 2;
         const highestZIndex = Math.max(0, ...Object.values(stickers).map((item) => item.zIndex));
+
+        const res = await fetch("/api/notes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: "New Sticker", content: "", x, y }),
+        });
+
+        const note: Note = await res.json();
+
         addSticker({
-            id: newId,
-            x: window.innerWidth / 2 - STICKER_WIDTH / 2,
-            y: window.innerHeight / 2 - STICKER_HEIGHT / 2,
+            id: note.id,
+            positionX: x,
+            positionY: y,
             zIndex: highestZIndex + 1,
-            title: "New Sticker",
-            content: "",
+            title: note.title,
+            content: note.content,
+            color: note.color,
+            isMinimized: note.isMinimized,
         });
     }, [addSticker, stickers]);
 
@@ -99,11 +120,13 @@ function Stickers() {
                     <Sticker
                         key={sticker.id}
                         id={sticker.id}
-                        x={sticker.x}
-                        y={sticker.y}
+                        positionX={sticker.positionX}
+                        positionY={sticker.positionY}
                         zIndex={sticker.zIndex}
                         title={sticker.title}
                         content={sticker.content}
+                        color={sticker.color}
+                        isMinimized={sticker.isMinimized}
                         onActivate={bringToFront}
                         onUpdate={handleUpdate}
                         onRemove={handleRemove}
