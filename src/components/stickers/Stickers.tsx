@@ -92,6 +92,11 @@ function Stickers() {
 
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    useEffect(() => {
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, []);
     const handleUpdate = useCallback(
         (id: string, field: "title" | "content") =>
             (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
