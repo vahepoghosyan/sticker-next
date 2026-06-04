@@ -25,10 +25,9 @@ export async function PATCH(
 
 export async function DELETE(
     _request: NextRequest,
-    ctx: RouteContext<"/api/notes/[id]">
+    ctx: { params: { id: string } }
 ) {
-    const { id } = await ctx.params;
-
+    const { id } = ctx.params;
     const [deleted] = await db
         .delete(notes)
         .where(eq(notes.id, id))
