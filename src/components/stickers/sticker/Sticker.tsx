@@ -6,8 +6,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 function Sticker({
     id,
-    x,
-    y,
+    positionX,
+    positionY,
     zIndex,
     title,
     content,
@@ -50,7 +50,7 @@ function Sticker({
         <div
             ref={ref}
             className="absolute z-1 h-100 w-100 overflow-hidden shadow-[0_0_12px_#301e42]"
-            style={{ left: x, top: y, zIndex }}
+            style={{ left: positionX, top: positionY, zIndex }}
             onPointerDown={onActivate(id)}
         >
             <div

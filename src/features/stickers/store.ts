@@ -1,36 +1,38 @@
 import { create } from "zustand";
-import { Sticker } from "@/types/sticker";
+import { type Note } from "@/types/sticker";
 
-export interface Stickers {
-    [key: string]: Sticker;
-}
+export type Stickers = Record<string, Note>;
 
 type StickerStore = {
     stickers: Stickers;
-    addSticker: (sticker: Sticker) => void;
-    updateSticker: (id: string, updates: Partial<Omit<Sticker, "id">>) => void;
+    addSticker: (sticker: Note) => void;
+    updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) => void;
     removeSticker: (id: string) => void;
+    fetchStickers: () => Promise<void>;
 };
 
 export const useStickerStore = create<StickerStore>((set) => ({
     stickers: {},
-    addSticker: (sticker: Sticker) =>
+
+    fetchStickers: async () => {
+        const res = await fetch("/api/notes");
+        const notes: Note[] = await res.json();
+        set({ stickers: Object.fromEntries(notes.map((note) => [note.id, note])) });
+    },
+
+    addSticker: (sticker: Note) =>
+        set((state) => ({
+            stickers: { ...state.stickers, [sticker.id]: sticker },
+        })),
+
+    updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) =>
         set((state) => ({
             stickers: {
                 ...state.stickers,
-                [sticker.id]: sticker,
+                [id]: { ...state.stickers[id], ...updates },
             },
         })),
-    updateSticker: (id: string, updates: Partial<Omit<Sticker, "id">>) =>
-        set((state) => ({
-            stickers: {
-                ...state.stickers,
-                [id]: {
-                    ...state.stickers[id],
-                    ...updates,
-                },
-            },
-        })),
+
     removeSticker: (id: string) =>
         set((state) => {
             const { [id]: _, ...rest } = state.stickers;

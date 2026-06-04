@@ -1,9 +1,25 @@
-export type Sticker = {
+export type Note = {
     id: string;
-    x: number;
-    y: number;
     title: string;
     content: string;
+    color: string;
+    isMinimized: boolean;
+    positionX: number;
+    positionY: number;
+    zIndex: number;
+    userIdn: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type Sticker = {
+    id: string;
+    title: string;
+    content: string;
+    color: string;
+    isMinimized: boolean;
+    positionX: number;
+    positionY: number;
     zIndex: number;
 };
 
