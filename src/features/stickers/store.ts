@@ -5,19 +5,28 @@ export type Stickers = Record<string, Note>;
 
 type StickerStore = {
     stickers: Stickers;
+    isLoading: boolean;
     addSticker: (sticker: Note) => void;
-    updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) => void;
-    removeSticker: (id: string) => void;
+    updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) => Promise<void>;
+    updateStickerLocal: (id: string, updates: Partial<Omit<Note, "id">>) => void;
+    removeSticker: (id: string) => Promise<void>;
     fetchStickers: () => Promise<void>;
 };
 
 export const useStickerStore = create<StickerStore>((set) => ({
     stickers: {},
+    isLoading: true,
 
     fetchStickers: async () => {
-        const res = await fetch("/api/notes");
-        const notes: Note[] = await res.json();
-        set({ stickers: Object.fromEntries(notes.map((note) => [note.id, note])) });
+        try {
+            const res = await fetch("/api/notes");
+            if (!res.ok) return;
+
+            const notes: Note[] = await res.json();
+            set({ stickers: Object.fromEntries(notes.map((note) => [note.id, note])) });
+        } finally {
+            set({ isLoading: false });
+        }
     },
 
     addSticker: (sticker: Note) =>
@@ -25,7 +34,7 @@ export const useStickerStore = create<StickerStore>((set) => ({
             stickers: { ...state.stickers, [sticker.id]: sticker },
         })),
 
-    updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) =>
+    updateStickerLocal: (id: string, updates: Partial<Omit<Note, "id">>) =>
         set((state) => ({
             stickers: {
                 ...state.stickers,
@@ -33,9 +42,25 @@ export const useStickerStore = create<StickerStore>((set) => ({
             },
         })),
 
-    removeSticker: (id: string) =>
+    updateSticker: async (id: string, updates: Partial<Omit<Note, "id">>) => {
+        set((state) => ({
+            stickers: {
+                ...state.stickers,
+                [id]: { ...state.stickers[id], ...updates },
+            },
+        }));
+        await fetch(`/api/notes/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updates),
+        });
+    },
+
+    removeSticker: async (id: string) => {
         set((state) => {
             const { [id]: _, ...rest } = state.stickers;
             return { stickers: rest };
-        }),
+        });
+        await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    },
 }));

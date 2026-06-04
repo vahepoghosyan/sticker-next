@@ -4,7 +4,7 @@ import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
 import { useStickerStore } from "@/features/stickers/store";
 import { useShallow } from "zustand/react/shallow";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
     MIN_STICKER_X,
     MIN_STICKER_Y,
@@ -16,11 +16,21 @@ import Sticker from "./sticker/Sticker";
 import { type Note } from "@/types/sticker";
 
 function Stickers() {
-    const { stickers, addSticker, updateSticker, removeSticker, fetchStickers } = useStickerStore(
+    const {
+        stickers,
+        isLoading,
+        addSticker,
+        updateSticker,
+        updateStickerLocal,
+        removeSticker,
+        fetchStickers,
+    } = useStickerStore(
         useShallow((s) => ({
             stickers: s.stickers,
+            isLoading: s.isLoading,
             addSticker: s.addSticker,
             updateSticker: s.updateSticker,
+            updateStickerLocal: s.updateStickerLocal,
             removeSticker: s.removeSticker,
             fetchStickers: s.fetchStickers,
         }))
@@ -34,7 +44,7 @@ function Stickers() {
 
     const bringToFront = useCallback(
         (id: string) => () => {
-            updateSticker(id, {
+            updateStickerLocal(id, {
                 zIndex: Math.max(...Object.values(stickers).map((item) => item.zIndex)) + 1,
             });
         },
@@ -67,6 +77,7 @@ function Stickers() {
             updateSticker(sourceId, {
                 positionX: Math.min(maxX, Math.max(MIN_STICKER_X, sticker.positionX + x)),
                 positionY: Math.min(maxY, Math.max(MIN_STICKER_Y, sticker.positionY + y)),
+                zIndex: Math.max(...Object.values(stickers).map((item) => item.zIndex)) + 1,
             });
         },
         [stickers, updateSticker]
@@ -79,28 +90,41 @@ function Stickers() {
         [removeSticker]
     );
 
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, []);
     const handleUpdate = useCallback(
         (id: string, field: "title" | "content") =>
             (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                updateSticker(id, { [field]: e.target.value });
+                const value = e.target.value;
+                updateStickerLocal(id, { [field]: value });
+                if (debounceRef.current) clearTimeout(debounceRef.current);
+                debounceRef.current = setTimeout(() => {
+                    updateSticker(id, { [field]: value });
+                }, 500);
             },
-        [updateSticker]
+        [updateSticker, updateStickerLocal]
     );
 
     const handleAdd = useCallback(async () => {
         console.log("🚀 ~ handleAdd ~ stickers:", stickers);
-        const x = window.innerWidth / 2 - STICKER_WIDTH / 2;
-        const y = window.innerHeight / 2 - STICKER_HEIGHT / 2;
+        const x = 16;
+        const y = 73;
         const highestZIndex = Math.max(0, ...Object.values(stickers).map((item) => item.zIndex));
 
         const res = await fetch("/api/notes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: "New Sticker", content: "", x, y }),
+            body: JSON.stringify({ title: "New Sticker", content: "", positionX: x, positionY: y }),
         });
 
         const note: Note = await res.json();
 
+        console.log("🚀 ~ Stickers ~ y:", y);
         addSticker({
             id: note.id,
             positionX: x,
@@ -115,6 +139,11 @@ function Stickers() {
 
     return (
         <>
+            {!isLoading && Object.values(stickers).length === 0 && (
+                <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-3xl">
+                    Add your notes here my G <span>👑</span>!{" "}
+                </h1>
+            )}
             <DragDropProvider onDragEnd={handleDragEnd}>
                 {Object.values(stickers).map((sticker) => (
                     <Sticker
