@@ -6,10 +6,7 @@ export type Note = {
     isMinimized: boolean;
     positionX: number;
     positionY: number;
-    zIndex: number;
-    userIdn: string;
-    createdAt: string;
-    updatedAt: string;
+    zIndex: number
 };
 
 export type Sticker = {

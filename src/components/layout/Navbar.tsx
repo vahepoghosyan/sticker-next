@@ -5,7 +5,7 @@ import Button from "@/components/ui/Button";
 export default function Navbar() {
     return (
         <header className="w-full bg-(--panel)">
-            <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+            <div className="mx-auto flex h-14 items-center justify-between px-4">
                 {/* Logo */}
                 <Link
                     href="/"
