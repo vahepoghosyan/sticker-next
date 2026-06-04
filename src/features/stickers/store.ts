@@ -9,7 +9,7 @@ type StickerStore = {
     addSticker: (sticker: Note) => void;
     updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) => Promise<void>;
     updateStickerLocal: (id: string, updates: Partial<Omit<Note, "id">>) => void;
-    removeSticker: (id: string) => void;
+    removeSticker: (id: string) => Promise<void>;
     fetchStickers: () => Promise<void>;
 };
 
