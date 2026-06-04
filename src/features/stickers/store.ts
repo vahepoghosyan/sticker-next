@@ -18,9 +18,15 @@ export const useStickerStore = create<StickerStore>((set) => ({
     isLoading: true,
 
     fetchStickers: async () => {
-        const res = await fetch("/api/notes");
-        const notes: Note[] = await res.json();
-        set({ stickers: Object.fromEntries(notes.map((note) => [note.id, note])), isLoading: false });
+        try {
+            const res = await fetch("/api/notes");
+            if (!res.ok) return;
+
+            const notes: Note[] = await res.json();
+            set({ stickers: Object.fromEntries(notes.map((note) => [note.id, note])) });
+        } finally {
+            set({ isLoading: false });
+        }
     },
 
     addSticker: (sticker: Note) =>
