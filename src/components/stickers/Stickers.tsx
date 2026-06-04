@@ -44,7 +44,6 @@ function Stickers() {
 
     const bringToFront = useCallback(
         (id: string) => () => {
-            console.log("🚀 ~ bringToFront ~ id:", id);
             updateStickerLocal(id, {
                 zIndex: Math.max(...Object.values(stickers).map((item) => item.zIndex)) + 1,
             });
