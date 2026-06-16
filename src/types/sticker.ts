@@ -3,10 +3,10 @@ export type Note = {
     title: string;
     content: string;
     color: string;
-    isMinimized: boolean;
+    isMinimized: string;
     positionX: number;
     positionY: number;
-    zIndex: number
+    zIndex: number;
 };
 
 export type Sticker = {
@@ -14,7 +14,7 @@ export type Sticker = {
     title: string;
     content: string;
     color: string;
-    isMinimized: boolean;
+    isMinimized: string;
     positionX: number;
     positionY: number;
     zIndex: number;
@@ -27,4 +27,5 @@ export type StickerProps = Sticker & {
         field: "title" | "content"
     ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     onRemove: (id: string) => () => void;
+    onMinimize: (id: string) => () => void;
 };

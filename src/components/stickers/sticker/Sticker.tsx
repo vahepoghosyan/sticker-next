@@ -14,8 +14,21 @@ function Sticker({
     onActivate,
     onUpdate,
     onRemove,
+    onMinimize,
 }: StickerProps) {
     const [isTitleEditEnabled, setIsTitleEditEnabled] = useState<boolean>(false);
+    const [isMinimizing, setIsMinimizing] = useState(false);
+    const [isAppearing, setIsAppearing] = useState(true);
+
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => setIsAppearing(false));
+        return () => cancelAnimationFrame(frame);
+    }, []);
+
+    const handleMinimizeClick = () => {
+        setIsMinimizing(true);
+        setTimeout(() => onMinimize(id)(), 300);
+    };
     const titleRef = useRef<HTMLInputElement | null>(null);
     const titleWrapperRef = useRef<HTMLDivElement | null>(null);
     const { ref, handleRef, isDragging } = useDraggable({
@@ -49,7 +62,7 @@ function Sticker({
     return (
         <div
             ref={ref}
-            className="absolute z-1 h-100 w-100 overflow-hidden shadow-[0_0_12px_#301e42]"
+            className={`absolute z-1 h-100 w-100 overflow-hidden shadow-[0_0_12px_#301e42] transition-all duration-300 ${isMinimizing || isAppearing ? "scale-75 opacity-0 translate-y-10" : ""}`}
             style={{ left: positionX, top: positionY, zIndex }}
             onPointerDown={onActivate(id)}
         >
@@ -62,7 +75,7 @@ function Sticker({
                         className="mr-1.5 w-3 h-3 bg-(--removeNote) rounded-full cursor-pointer relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-[50%] before:-translate-x-1/2 before:w-2 before:h-0.5 before:bg-black before:opacity-0 before:transition-opacity before:rotate-45 after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[50%] after:-translate-x-1/2 after:w-0.5 after:h-2 after:bg-black after:opacity-0 after:transition-opacity after:rotate-45 hover:before:opacity-100 hover:after:opacity-100"
                         onClick={onRemove(id)}
                     />
-                    <button className="mr-1.5 w-3 h-3 bg-(--minimize) rounded-full cursor-pointer relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-[50%] before:-translate-x-1/2 before:w-2 before:h-0.5 before:bg-black before:opacity-0 before:transition-opacity hover:before:opacity-100" />
+                    <button className="mr-1.5 w-3 h-3 bg-(--minimize) rounded-full cursor-pointer relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-[50%] before:-translate-x-1/2 before:w-2 before:h-0.5 before:bg-black before:opacity-0 before:transition-opacity hover:before:opacity-100" onClick={handleMinimizeClick} />
                 </div>
                 <div
                     ref={handleRef}

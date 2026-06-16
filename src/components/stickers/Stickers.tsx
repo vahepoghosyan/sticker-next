@@ -4,7 +4,7 @@ import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
 import { useStickerStore } from "@/features/stickers/store";
 import { useShallow } from "zustand/react/shallow";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import {
     MIN_STICKER_X,
     MIN_STICKER_Y,
@@ -13,28 +13,21 @@ import {
     VIEWPORT_MARGIN,
 } from "@/constants/sticker";
 import Sticker from "./sticker/Sticker";
+import Minimized from "@/components/minimized/Minimized";
 import { type Note } from "@/types/sticker";
 
 function Stickers() {
-    const {
-        stickers,
-        isLoading,
-        addSticker,
-        updateSticker,
-        updateStickerLocal,
-        removeSticker,
-        fetchStickers,
-    } = useStickerStore(
-        useShallow((s) => ({
-            stickers: s.stickers,
-            isLoading: s.isLoading,
-            addSticker: s.addSticker,
-            updateSticker: s.updateSticker,
-            updateStickerLocal: s.updateStickerLocal,
-            removeSticker: s.removeSticker,
-            fetchStickers: s.fetchStickers,
-        }))
-    );
+    const { stickers, isLoading, addSticker, updateSticker, removeSticker, fetchStickers } =
+        useStickerStore(
+            useShallow((s) => ({
+                stickers: s.stickers,
+                isLoading: s.isLoading,
+                addSticker: s.addSticker,
+                updateSticker: s.updateSticker,
+                removeSticker: s.removeSticker,
+                fetchStickers: s.fetchStickers,
+            }))
+        );
 
     useEffect(() => {
         fetchStickers();
@@ -44,7 +37,7 @@ function Stickers() {
 
     const bringToFront = useCallback(
         (id: string) => () => {
-            updateStickerLocal(id, {
+            updateSticker(id, {
                 zIndex: Math.max(...Object.values(stickers).map((item) => item.zIndex)) + 1,
             });
         },
@@ -90,28 +83,22 @@ function Stickers() {
         [removeSticker]
     );
 
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-        };
-    }, []);
     const handleUpdate = useCallback(
         (id: string, field: "title" | "content") =>
             (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                const value = e.target.value;
-                updateStickerLocal(id, { [field]: value });
-                if (debounceRef.current) clearTimeout(debounceRef.current);
-                debounceRef.current = setTimeout(() => {
-                    updateSticker(id, { [field]: value });
-                }, 500);
+                updateSticker(id, { [field]: e.target.value });
             },
-        [updateSticker, updateStickerLocal]
+        [updateSticker]
+    );
+
+    const handleMinimize = useCallback(
+        (id: string) => () => {
+            updateSticker(id, { isMinimized: "true" });
+        },
+        [updateSticker]
     );
 
     const handleAdd = useCallback(async () => {
-        console.log("🚀 ~ handleAdd ~ stickers:", stickers);
         const x = 16;
         const y = 73;
         const highestZIndex = Math.max(0, ...Object.values(stickers).map((item) => item.zIndex));
@@ -145,22 +132,25 @@ function Stickers() {
                 </h1>
             )}
             <DragDropProvider onDragEnd={handleDragEnd}>
-                {Object.values(stickers).map((sticker) => (
-                    <Sticker
-                        key={sticker.id}
-                        id={sticker.id}
-                        positionX={sticker.positionX}
-                        positionY={sticker.positionY}
-                        zIndex={sticker.zIndex}
-                        title={sticker.title}
-                        content={sticker.content}
-                        color={sticker.color}
-                        isMinimized={sticker.isMinimized}
-                        onActivate={bringToFront}
-                        onUpdate={handleUpdate}
-                        onRemove={handleRemove}
-                    />
-                ))}
+                {Object.values(stickers)
+                    .filter((sticker) => sticker.isMinimized !== "true")
+                    .map((sticker) => (
+                        <Sticker
+                            key={sticker.id}
+                            id={sticker.id}
+                            positionX={sticker.positionX}
+                            positionY={sticker.positionY}
+                            zIndex={sticker.zIndex}
+                            title={sticker.title}
+                            content={sticker.content}
+                            color={sticker.color}
+                            isMinimized={sticker.isMinimized}
+                            onActivate={bringToFront}
+                            onUpdate={handleUpdate}
+                            onRemove={handleRemove}
+                            onMinimize={handleMinimize}
+                        />
+                    ))}
             </DragDropProvider>
             <button
                 className="absolute bottom-4 right-4 w-[50px] h-[50px] cursor-pointer hover:opacity-90 before:absolute before:inset-[5px] before:bg-white  before:rounded-full before:-z-1"
@@ -175,6 +165,7 @@ function Stickers() {
                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z" />
                 </svg>
             </button>
+            <Minimized />
         </>
     );
 }

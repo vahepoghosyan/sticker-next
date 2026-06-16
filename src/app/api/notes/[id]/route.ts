@@ -5,9 +5,9 @@ import type { NextRequest } from "next/server";
 
 export async function PATCH(
     request: NextRequest,
-    ctx: { params: { id: string } }
+    ctx: { params: Promise<{ id: string }> }
 ) {
-    const { id } = ctx.params;
+    const { id } = await ctx.params;
     const body = (await request.json()) as Record<string, unknown>;
 
     const updates: Partial<typeof notes.$inferInsert> = {};
@@ -45,9 +45,9 @@ export async function PATCH(
 
 export async function DELETE(
     _request: NextRequest,
-    ctx: { params: { id: string } }
+    ctx: { params: Promise<{ id: string }> }
 ) {
-    const { id } = ctx.params;
+    const { id } = await ctx.params;
     const [deleted] = await db
         .delete(notes)
         .where(eq(notes.id, id))
