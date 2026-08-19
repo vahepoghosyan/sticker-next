@@ -1,12 +1,19 @@
 import { db } from "@/db";
 import { notes } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
 export async function PATCH(
     request: NextRequest,
     ctx: { params: Promise<{ id: string }> }
 ) {
+    const session = await auth();
+
+    if (!session?.user) {
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await ctx.params;
     const body = (await request.json()) as Record<string, unknown>;
 
@@ -32,7 +39,7 @@ export async function PATCH(
     const [updated] = await db
         .update(notes)
         .set(updates)
-        .where(eq(notes.id, id))
+        .where(and(eq(notes.id, id), eq(notes.userIdn, session.user.id)))
         .returning();
 
     if (!updated) {
@@ -46,10 +53,16 @@ export async function DELETE(
     _request: NextRequest,
     ctx: { params: Promise<{ id: string }> }
 ) {
+    const session = await auth();
+
+    if (!session?.user) {
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await ctx.params;
     const [deleted] = await db
         .delete(notes)
-        .where(eq(notes.id, id))
+        .where(and(eq(notes.id, id), eq(notes.userIdn, session.user.id)))
         .returning();
 
     if (!deleted) {
