@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import { auth, signIn, signOut } from "@/lib/auth";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { auth, signOut } from "@/lib/auth";
 
 export default async function Navbar() {
     const session = await auth();
@@ -37,16 +38,7 @@ export default async function Navbar() {
                             </Button>
                         </form>
                     ) : (
-                        <form
-                            action={async () => {
-                                "use server";
-                                await signIn("google");
-                            }}
-                        >
-                            <Button type="submit" variant="primary" size="sm">
-                                Continue with Google
-                            </Button>
-                        </form>
+                        <GoogleSignInButton size="sm" />
                     )}
                 </nav>
             </div>
