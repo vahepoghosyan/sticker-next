@@ -1,7 +1,7 @@
 import { type Note } from "@/types/sticker";
 import { useStickerStore } from "@/features/stickers/store";
 import { useShallow } from "zustand/react/shallow";
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 
 const ANIMATION_DURATION = 100;
 
@@ -9,14 +9,19 @@ function MinimizedNote(sticker: Note & { style?: CSSProperties }) {
     const { id, title, style } = sticker;
     const [isAppearing, setIsAppearing] = useState(true);
     const [isClosing, setIsClosing] = useState(false);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         const frame = requestAnimationFrame(() => setIsAppearing(false));
-        return () => cancelAnimationFrame(frame);
+        return () => {
+            cancelAnimationFrame(frame);
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
     }, []);
 
-    const { updateSticker, removeSticker } = useStickerStore(
+    const { stickers, updateSticker, removeSticker } = useStickerStore(
         useShallow((s) => ({
+            stickers: s.stickers,
             updateSticker: s.updateSticker,
             removeSticker: s.removeSticker,
         }))
@@ -24,18 +29,22 @@ function MinimizedNote(sticker: Note & { style?: CSSProperties }) {
 
     const handleMaximize = () => {
         setIsClosing(true);
-        setTimeout(() => updateSticker(id, { isMinimized: "false" }), ANIMATION_DURATION);
+        const highestZIndex = Math.max(0, ...Object.values(stickers).map((s) => s.zIndex));
+        timerRef.current = setTimeout(
+            () => updateSticker(id, { isMinimized: "false", zIndex: highestZIndex + 1 }),
+            ANIMATION_DURATION
+        );
     };
 
     const handleRemoveNote = (e: { stopPropagation: () => void }) => {
         e.stopPropagation();
         setIsClosing(true);
-        setTimeout(() => removeSticker(id), ANIMATION_DURATION);
+        timerRef.current = setTimeout(() => removeSticker(id), ANIMATION_DURATION);
     };
 
     return (
         <div
-            className={`overflow-hidden flex items-center bg-(--primary) py-1 rounded-t cursor-pointer shadow-[0_0_12px_#301e42] transition-[width] duration-${ANIMATION_DURATION} ${isAppearing || isClosing ? "w-0" : "w-37.5"}`}
+            className={`overflow-hidden flex items-center bg-(--primary) py-1 rounded-t cursor-pointer shadow-[0_0_12px_#301e42] transition-[width] duration-100 ${isAppearing || isClosing ? "w-0" : "w-37.5"}`}
             style={style}
             onClick={handleMaximize}
         >

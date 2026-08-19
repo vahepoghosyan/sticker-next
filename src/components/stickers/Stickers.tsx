@@ -33,12 +33,10 @@ function Stickers() {
         fetchStickers();
     }, [fetchStickers]);
 
-    console.log("🚀 ~ Stickers ~ stickers:", stickers);
-
     const bringToFront = useCallback(
         (id: string) => () => {
             updateSticker(id, {
-                zIndex: Math.max(...Object.values(stickers).map((item) => item.zIndex)) + 1,
+                zIndex: Math.max(0, ...Object.values(stickers).map((item) => item.zIndex)) + 1,
             });
         },
         [stickers, updateSticker]
@@ -70,7 +68,7 @@ function Stickers() {
             updateSticker(sourceId, {
                 positionX: Math.min(maxX, Math.max(MIN_STICKER_X, sticker.positionX + x)),
                 positionY: Math.min(maxY, Math.max(MIN_STICKER_Y, sticker.positionY + y)),
-                zIndex: Math.max(...Object.values(stickers).map((item) => item.zIndex)) + 1,
+                zIndex: Math.max(0, ...Object.values(stickers).map((item) => item.zIndex)) + 1,
             });
         },
         [stickers, updateSticker]
@@ -106,12 +104,13 @@ function Stickers() {
         const res = await fetch("/api/notes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: "New Sticker", content: "", positionX: x, positionY: y }),
+            body: JSON.stringify({ title: "New Sticker", content: "", positionX: x, positionY: y, zIndex: highestZIndex + 1 }),
         });
+
+        if (!res.ok) return;
 
         const note: Note = await res.json();
 
-        console.log("🚀 ~ Stickers ~ y:", y);
         addSticker({
             id: note.id,
             positionX: x,
@@ -128,7 +127,7 @@ function Stickers() {
         <>
             {!isLoading && Object.values(stickers).length === 0 && (
                 <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-3xl">
-                    Add your notes here my G <span>👑</span>!{" "}
+                    Add your notes here my G <span className='absolute top-[-20] right-[12]'>👑</span>!{" "}
                 </h1>
             )}
             <DragDropProvider onDragEnd={handleDragEnd}>

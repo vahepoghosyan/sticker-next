@@ -19,10 +19,9 @@ export async function PATCH(
     if (typeof body.positionY === "number") updates.positionY = body.positionY;
     if (typeof body.zIndex === "number") updates.zIndex = body.zIndex;
 
-    // `is_minimized` is stored as text in the current schema.
     if (typeof body.isMinimized === "boolean") {
         updates.isMinimized = body.isMinimized ? "true" : "false";
-    } else if (typeof body.isMinimized === "string") {
+    } else if (body.isMinimized === "true" || body.isMinimized === "false") {
         updates.isMinimized = body.isMinimized;
     }
 

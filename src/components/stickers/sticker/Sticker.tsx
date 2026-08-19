@@ -25,10 +25,19 @@ function Sticker({
         return () => cancelAnimationFrame(frame);
     }, []);
 
+    const minimizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const handleMinimizeClick = () => {
         setIsMinimizing(true);
-        setTimeout(() => onMinimize(id)(), 300);
+        minimizeTimerRef.current = setTimeout(() => onMinimize(id)(), 300);
     };
+
+    useEffect(() => {
+        return () => {
+            if (minimizeTimerRef.current) clearTimeout(minimizeTimerRef.current);
+        };
+    }, []);
+
     const titleRef = useRef<HTMLInputElement | null>(null);
     const titleWrapperRef = useRef<HTMLDivElement | null>(null);
     const { ref, handleRef, isDragging } = useDraggable({
