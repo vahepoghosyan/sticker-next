@@ -25,8 +25,9 @@ export type StickerProps = Sticker & {
     onActivate: (id: string) => () => void;
     onUpdate: (
         id: string,
-        field: "title" | "content"
-    ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+        field: "title"
+    ) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onContentChange: (id: string) => (content: string) => void;
     onRemove: (id: string) => () => void;
     onMinimize: (id: string) => () => void;
 };

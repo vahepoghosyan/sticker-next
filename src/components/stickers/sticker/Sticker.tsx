@@ -3,6 +3,7 @@
 import { useDraggable } from "@dnd-kit/react";
 import { type StickerProps } from "@/types/sticker";
 import { useState, useRef, useEffect, useCallback } from "react";
+import StickerEditor from "./StickerEditor";
 
 function Sticker({
     id,
@@ -14,6 +15,7 @@ function Sticker({
     layout,
     onActivate,
     onUpdate,
+    onContentChange,
     onRemove,
     onMinimize,
 }: StickerProps) {
@@ -141,11 +143,7 @@ function Sticker({
                 </button>
             </div>
 
-            <textarea
-                className="block h-[calc(100%-34px)] w-full resize-none border-2 border-t-0 border-[rgba(70,74,84,0.34)] bg-[#1b1d1d82] p-5 backdrop-blur-[10px] focus:outline-none"
-                value={content}
-                onChange={onUpdate(id, "content")}
-            />
+            <StickerEditor content={content} onChange={onContentChange(id)} />
 
             <button
                 type="button"

@@ -160,10 +160,17 @@ console.log(321321)
     );
 
     const handleUpdate = useCallback(
-        (id: string, field: "title" | "content") =>
-            (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        (id: string, field: "title") =>
+            (e: React.ChangeEvent<HTMLInputElement>) => {
                 updateSticker(id, { [field]: e.target.value });
             },
+        [updateSticker]
+    );
+
+    const handleContentChange = useCallback(
+        (id: string) => (content: string) => {
+            updateSticker(id, { content });
+        },
         [updateSticker]
     );
 
@@ -217,6 +224,7 @@ console.log(321321)
                             layout="stack"
                             onActivate={bringToFront}
                             onUpdate={handleUpdate}
+                            onContentChange={handleContentChange}
                             onRemove={handleRemove}
                             onMinimize={handleMinimize}
                         />
@@ -241,6 +249,7 @@ console.log(321321)
                                 layout="board"
                                 onActivate={bringToFront}
                                 onUpdate={handleUpdate}
+                                onContentChange={handleContentChange}
                                 onRemove={handleRemove}
                                 onMinimize={handleMinimize}
                             />
