@@ -21,6 +21,7 @@ export type Sticker = {
 };
 
 export type StickerProps = Sticker & {
+    layout: "board" | "stack";
     onActivate: (id: string) => () => void;
     onUpdate: (
         id: string,
