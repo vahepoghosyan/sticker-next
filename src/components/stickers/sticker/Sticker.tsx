@@ -3,6 +3,7 @@
 import { useDraggable } from "@dnd-kit/react";
 import { type StickerProps } from "@/types/sticker";
 import { useState, useRef, useEffect, useCallback } from "react";
+import StickerEditor from "./StickerEditor";
 
 function Sticker({
     id,
@@ -11,11 +12,14 @@ function Sticker({
     zIndex,
     title,
     content,
+    layout,
     onActivate,
     onUpdate,
+    onContentChange,
     onRemove,
     onMinimize,
 }: StickerProps) {
+    const isBoard = layout === "board";
     const [isTitleEditEnabled, setIsTitleEditEnabled] = useState<boolean>(false);
     const [isMinimizing, setIsMinimizing] = useState(false);
     const [isAppearing, setIsAppearing] = useState(true);
@@ -70,10 +74,10 @@ function Sticker({
 
     return (
         <div
-            ref={ref}
-            className={`absolute z-1 h-100 w-100 overflow-hidden shadow-[0_0_12px_#301e42] transition-all duration-300 ${isMinimizing || isAppearing ? "scale-75 opacity-0 translate-y-10" : ""}`}
-            style={{ left: positionX, top: positionY, zIndex }}
-            onPointerDown={onActivate(id)}
+            ref={isBoard ? ref : undefined}
+            className={`${isBoard ? "absolute z-1 h-100 w-100" : "relative w-full h-64"} overflow-hidden shadow-[0_0_12px_#301e42] transition-[opacity,scale,translate] duration-300 ${isMinimizing || isAppearing ? "scale-75 opacity-0 translate-y-10" : ""}`}
+            style={isBoard ? { left: positionX, top: positionY, zIndex } : undefined}
+            onPointerDown={isBoard ? onActivate(id) : undefined}
         >
             <div
                 className="relative flex items-center bg-(--primary) px-2.5 py-1.25"
@@ -84,12 +88,19 @@ function Sticker({
                         className="mr-1.5 w-3 h-3 bg-(--removeNote) rounded-full cursor-pointer relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-[50%] before:-translate-x-1/2 before:w-2 before:h-0.5 before:bg-black before:opacity-0 before:transition-opacity before:rotate-45 after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[50%] after:-translate-x-1/2 after:w-0.5 after:h-2 after:bg-black after:opacity-0 after:transition-opacity after:rotate-45 hover:before:opacity-100 hover:after:opacity-100"
                         onClick={onRemove(id)}
                     />
-                    <button className="mr-1.5 w-3 h-3 bg-(--minimize) rounded-full cursor-pointer relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-[50%] before:-translate-x-1/2 before:w-2 before:h-0.5 before:bg-black before:opacity-0 before:transition-opacity hover:before:opacity-100" onClick={handleMinimizeClick} />
+                    {isBoard && (
+                        <button
+                            className="mr-1.5 w-3 h-3 bg-(--minimize) rounded-full cursor-pointer relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-[50%] before:-translate-x-1/2 before:w-2 before:h-0.5 before:bg-black before:opacity-0 before:transition-opacity hover:before:opacity-100"
+                            onClick={handleMinimizeClick}
+                        />
+                    )}
                 </div>
-                <div
-                    ref={handleRef}
-                    className="absolute inset-0 cursor-grab active:cursor-grabbing"
-                />
+                {isBoard && (
+                    <div
+                        ref={handleRef}
+                        className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                    />
+                )}
                 <div
                     className={`relative z-10 grow ${isTitleEditEnabled ? "" : "pointer-events-none"}`}
                 >
@@ -132,11 +143,7 @@ function Sticker({
                 </button>
             </div>
 
-            <textarea
-                className="block h-[calc(100%-34px)] w-full resize-none border-2 border-t-0 border-[rgba(70,74,84,0.34)] bg-[#1b1d1d82] p-5 backdrop-blur-[10px] focus:outline-none"
-                value={content}
-                onChange={onUpdate(id, "content")}
-            />
+            <StickerEditor content={content} onChange={onContentChange(id)} />
 
             <button
                 type="button"
