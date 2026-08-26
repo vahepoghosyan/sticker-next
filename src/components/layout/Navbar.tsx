@@ -8,7 +8,7 @@ export default async function Navbar() {
     const session = await auth();
 
     return (
-        <header className="w-full bg-(--panel)">
+        <header className="w-full bg-red-600">
             <div className="mx-auto flex h-14 items-center justify-between px-4">
                 {/* Logo */}
                 <Link
