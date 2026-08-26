@@ -42,7 +42,8 @@ jobs:
 
       - name: Restart app
         run: |
+          export PORT=5173
           pm2 describe sticker-next > /dev/null 2>&1 \
             && pm2 restart sticker-next --update-env \
-            || pm2 start pnpm --name sticker-next --cwd "$GITHUB_WORKSPACE" -- start -- -p 5173
+            || pm2 start pnpm --name sticker-next --cwd "$GITHUB_WORKSPACE" --interpreter none -- start
           pm2 save
