@@ -22,11 +22,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Load environment
+        run: cp ~/deploy-secrets/sticker-next.env .env
+
       - name: Apply database schema
-        run: pnpm exec drizzle-kit push
+        run: |
+          set -a
+          source .env
+          set +a
+          pnpm exec drizzle-kit push
 
       - name: Build
         run: pnpm build
 
       - name: Restart app
-        run: pm2 restart sticker-next --update-env || pm2 start pnpm --name sticker-next -- start
+        run: |
+          pm2 describe sticker-next > /dev/null 2>&1 \
+            && pm2 restart sticker-next --update-env \
+            || pm2 start pnpm --name sticker-next --cwd "$GITHUB_WORKSPACE" -- start -- -p 5173
+          pm2 save
