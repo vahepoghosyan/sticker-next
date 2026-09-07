@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import RefreshButton from "@/components/layout/RefreshButton";
 import { auth, signOut } from "@/lib/auth";
 
 export default async function Navbar() {
@@ -27,16 +28,19 @@ export default async function Navbar() {
 
                 <nav className="flex items-center gap-4 text-sm text-neutral-600">
                     {session?.user ? (
-                        <form
-                            action={async () => {
-                                "use server";
-                                await signOut({ redirectTo: "/" });
-                            }}
-                        >
-                            <Button type="submit" variant="secondary" size="sm">
-                                Sign out
-                            </Button>
-                        </form>
+                        <>
+                            <RefreshButton />
+                            <form
+                                action={async () => {
+                                    "use server";
+                                    await signOut({ redirectTo: "/" });
+                                }}
+                            >
+                                <Button type="submit" variant="secondary" size="sm">
+                                    Sign out
+                                </Button>
+                            </form>
+                        </>
                     ) : (
                         <GoogleSignInButton size="sm" />
                     )}
