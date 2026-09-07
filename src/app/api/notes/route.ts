@@ -31,6 +31,7 @@ export async function POST(request: Request) {
         const [note] = await db
             .insert(notes)
             .values({
+                ...(typeof body.id === "string" ? { id: body.id } : {}),
                 userIdn: session.user.id,
                 title: body.title ?? "New Sticker",
                 content: body.content ?? "",
@@ -39,7 +40,12 @@ export async function POST(request: Request) {
                 positionY: body.positionY ?? 0,
                 zIndex: body.zIndex ?? 0,
             })
+            .onConflictDoNothing()
             .returning();
+
+        if (!note) {
+            return Response.json({ error: "Note already exists" }, { status: 409 });
+        }
 
         return Response.json(note, { status: 201 });
     } catch {

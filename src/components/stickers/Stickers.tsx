@@ -92,20 +92,54 @@ function useIsMobile() {
     );
 }
 
+function subscribeToOnlineStatus(callback: () => void) {
+    window.addEventListener("online", callback);
+    window.addEventListener("offline", callback);
+    return () => {
+        window.removeEventListener("online", callback);
+        window.removeEventListener("offline", callback);
+    };
+}
+
+function getOnlineSnapshot() {
+    return navigator.onLine;
+}
+
+function getOnlineServerSnapshot() {
+    return true;
+}
+
+function useIsOnline() {
+    return useSyncExternalStore(
+        subscribeToOnlineStatus,
+        getOnlineSnapshot,
+        getOnlineServerSnapshot
+    );
+}
+
 function Stickers() {
-    const { stickers, isLoading, addSticker, updateSticker, removeSticker, fetchStickers } =
-        useStickerStore(
-            useShallow((s) => ({
-                stickers: s.stickers,
-                isLoading: s.isLoading,
-                addSticker: s.addSticker,
-                updateSticker: s.updateSticker,
-                removeSticker: s.removeSticker,
-                fetchStickers: s.fetchStickers,
-            }))
-        );
+    const {
+        stickers,
+        isLoading,
+        isSyncing,
+        addSticker,
+        updateSticker,
+        removeSticker,
+        fetchStickers,
+    } = useStickerStore(
+        useShallow((s) => ({
+            stickers: s.stickers,
+            isLoading: s.isLoading,
+            isSyncing: s.isSyncing,
+            addSticker: s.addSticker,
+            updateSticker: s.updateSticker,
+            removeSticker: s.removeSticker,
+            fetchStickers: s.fetchStickers,
+        }))
+    );
 
     const isMobile = useIsMobile();
+    const isOnline = useIsOnline();
     useWindowSize();
 
     useEffect(() => {
@@ -274,6 +308,16 @@ function Stickers() {
                 </svg>
             </button>
             {!isMobile && <Minimized />}
+            {(!isOnline || isSyncing) && (
+                <div className="fixed z-100 bottom-4 left-4 flex items-center gap-2 rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
+                    <span
+                        className={`h-2 w-2 rounded-full ${
+                            isOnline ? "bg-yellow-300 animate-pulse" : "bg-red-400"
+                        }`}
+                    />
+                    {isOnline ? "Syncing…" : "Offline — changes saved locally"}
+                </div>
+            )}
         </>
     );
 }
