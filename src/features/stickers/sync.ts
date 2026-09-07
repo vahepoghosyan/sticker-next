@@ -76,20 +76,26 @@ async function sendEntry(entry: QueueEntry): Promise<boolean> {
 }
 
 async function flushOnce(): Promise<void> {
-    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    // Loops until the queue is drained (or a send fails) rather than a single
+    // pass, so entries queued while this flush is already running - which
+    // `flushQueue`'s single-flight dedup would otherwise skip - still go out.
+    while (true) {
+        if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
-    const queue = await getQueue();
+        const queue = await getQueue();
+        if (queue.length === 0) return;
 
-    for (const entry of queue) {
-        try {
-            const ok = await sendEntry(entry);
-            if (ok) {
-                await deleteQueueEntry(entry.id);
-            } else {
-                break;
+        for (const entry of queue) {
+            try {
+                const ok = await sendEntry(entry);
+                if (ok) {
+                    await deleteQueueEntry(entry.id);
+                } else {
+                    return;
+                }
+            } catch {
+                return;
             }
-        } catch {
-            break;
         }
     }
 }

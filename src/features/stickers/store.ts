@@ -120,14 +120,16 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
         const updated = get().stickers[id];
         if (!updated) return;
 
-        putSticker(updated).then(() => queueUpdate(id, updates));
+        const persisted = putSticker(updated).then(() => queueUpdate(id, updates));
 
         const isTextUpdate = "title" in updates || "content" in updates;
         if (isTextUpdate) {
             clearTimeout(flushDebounceTimers[id]);
-            flushDebounceTimers[id] = setTimeout(() => triggerFlush(set), 500);
+            flushDebounceTimers[id] = setTimeout(() => {
+                persisted.then(() => triggerFlush(set));
+            }, 500);
         } else {
-            triggerFlush(set);
+            persisted.then(() => triggerFlush(set));
         }
     },
 
