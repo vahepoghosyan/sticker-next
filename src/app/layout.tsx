@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Navigation from "@/components/layout/Navbar";
+import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,6 +35,7 @@ export default function RootLayout({
     return (
         <html lang="en" className={`${inter.variable} h-full antialiased`}>
             <body className="min-h-full flex flex-col">
+                <ServiceWorkerRegister />
                 <Navigation />
                 {children}
             </body>
