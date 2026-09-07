@@ -19,13 +19,21 @@ export default function manifest(): MetadataRoute.Manifest {
             },
             {
                 src: "/icon-maskable.svg",
-                sizes: "512x512",
+                sizes: "any",
                 type: "image/svg+xml",
                 purpose: "maskable",
             },
             {
-                src: "/icon-monochrome.svg",
+                // Android's WebAPK minting needs a raster icon for maskable;
+                // the SVG above alone wasn't picked up reliably.
+                src: "/icon-maskable.png",
                 sizes: "512x512",
+                type: "image/png",
+                purpose: "maskable",
+            },
+            {
+                src: "/icon-monochrome.svg",
+                sizes: "any",
                 type: "image/svg+xml",
                 purpose: "monochrome",
             },
