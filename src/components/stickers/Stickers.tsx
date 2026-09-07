@@ -114,7 +114,7 @@ function Stickers() {
 
     const bringToFront = useCallback(
         (id: string) => () => {
-            console.log(123123)
+            console.log(123123);
             updateSticker(id, {
                 zIndex: Math.max(0, ...Object.values(stickers).map((item) => item.zIndex)) + 1,
             });
@@ -127,7 +127,7 @@ function Stickers() {
             if (event.canceled) {
                 return;
             }
-console.log(321321)
+            console.log(321321);
             const sourceId = String(event.operation.source?.id ?? "");
 
             if (!sourceId) {
@@ -160,10 +160,9 @@ console.log(321321)
     );
 
     const handleUpdate = useCallback(
-        (id: string, field: "title") =>
-            (e: React.ChangeEvent<HTMLInputElement>) => {
-                updateSticker(id, { [field]: e.target.value });
-            },
+        (id: string, field: "title") => (e: React.ChangeEvent<HTMLInputElement>) => {
+            updateSticker(id, { [field]: e.target.value });
+        },
         [updateSticker]
     );
 
@@ -204,8 +203,12 @@ console.log(321321)
     return (
         <>
             {!isLoading && Object.values(stickers).length === 0 && (
-                <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-3xl">
-                    Add your notes here my G <span className='absolute top-[-20] right-[12]'>👑</span>!{" "}
+                <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-3xl w-full px-7">
+                    Add your notes here my{" "}
+                    <span className="relative">
+                        G <span className="absolute top-[-20] right-[4]">👑</span>
+                    </span>
+                    !{" "}
                 </h1>
             )}
             {isMobile ? (
