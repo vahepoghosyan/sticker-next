@@ -7,7 +7,7 @@ export default async function HomePage() {
 
     if (!session?.user) {
         return (
-            <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
+            <main className="flex flex-1 flex-col items-center justify-start md:justify-center gap-6 px-4 text-center">
                 <h1 className="text-white text-3xl">Sign in to see your stickers</h1>
                 <GoogleSignInButton size="lg" />
             </main>
@@ -15,7 +15,7 @@ export default async function HomePage() {
     }
 
     return (
-        <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
+        <main className="flex flex-1 flex-col items-center justify-start md:justify-center gap-6 px-4 text-center">
             <Stickers />
         </main>
     );
