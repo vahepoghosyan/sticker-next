@@ -216,6 +216,13 @@ function Stickers() {
         [updateSticker]
     );
 
+    const handleMoveSideMenu = useCallback(
+        (id: string) => () => {
+            updateSticker(id, { isInSideMenu: "true", isMinimized: "false" });
+        },
+        [updateSticker]
+    );
+
     const handleAdd = useCallback(() => {
         const x = 16;
         const y = 73;
@@ -293,9 +300,11 @@ function Stickers() {
     );
 
     const visibleStickers = Object.values(stickers).filter(
-        (sticker) => sticker.isMinimized !== "true"
+        (sticker) => sticker.isMinimized !== "true" && sticker.isInSideMenu !== "true"
     );
-    const allStickers = Object.values(stickers);
+    const allStickers = Object.values(stickers).filter(
+        (sticker) => sticker.isInSideMenu !== "true"
+    );
     const bounds = getMaxPosition();
 
     return (
@@ -322,12 +331,14 @@ function Stickers() {
                             content={sticker.content}
                             color={sticker.color}
                             isMinimized={sticker.isMinimized}
+                            isInSideMenu={sticker.isInSideMenu}
                             layout="stack"
                             onActivate={bringToFront}
                             onUpdate={handleUpdate}
                             onContentChange={handleContentChange}
                             onRemove={handleRemove}
                             onMinimize={handleMinimize}
+                            onMoveSideMenu={handleMoveSideMenu}
                         />
                     ))}
                 </div>
@@ -347,12 +358,14 @@ function Stickers() {
                                 content={sticker.content}
                                 color={sticker.color}
                                 isMinimized={sticker.isMinimized}
+                                isInSideMenu={sticker.isInSideMenu}
                                 layout="board"
                                 onActivate={bringToFront}
                                 onUpdate={handleUpdate}
                                 onContentChange={handleContentChange}
                                 onRemove={handleRemove}
                                 onMinimize={handleMinimize}
+                                onMoveSideMenu={handleMoveSideMenu}
                             />
                         );
                     })}
