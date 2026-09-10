@@ -32,6 +32,12 @@ export async function PATCH(
         updates.isMinimized = body.isMinimized;
     }
 
+    if (typeof body.isInSideMenu === "boolean") {
+        updates.isInSideMenu = body.isInSideMenu ? "true" : "false";
+    } else if (body.isInSideMenu === "true" || body.isInSideMenu === "false") {
+        updates.isInSideMenu = body.isInSideMenu;
+    }
+
     if (Object.keys(updates).length === 0) {
         return Response.json({ error: "No valid fields to update" }, { status: 400 });
     }

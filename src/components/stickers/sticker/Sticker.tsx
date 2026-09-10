@@ -18,10 +18,12 @@ function Sticker({
     onContentChange,
     onRemove,
     onMinimize,
+    onMoveSideMenu,
 }: StickerProps) {
     const isBoard = layout === "board";
     const [isTitleEditEnabled, setIsTitleEditEnabled] = useState<boolean>(false);
     const [isMinimizing, setIsMinimizing] = useState(false);
+    const [isMovingSideMenu, setIsMovingSideMenu] = useState(false);
     const [isAppearing, setIsAppearing] = useState(true);
 
     useEffect(() => {
@@ -30,15 +32,22 @@ function Sticker({
     }, []);
 
     const minimizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const moveSideMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleMinimizeClick = () => {
         setIsMinimizing(true);
         minimizeTimerRef.current = setTimeout(() => onMinimize(id)(), 300);
     };
 
+    const handleMoveSideMenuClick = () => {
+        setIsMovingSideMenu(true);
+        moveSideMenuTimerRef.current = setTimeout(() => onMoveSideMenu(id)(), 300);
+    };
+
     useEffect(() => {
         return () => {
             if (minimizeTimerRef.current) clearTimeout(minimizeTimerRef.current);
+            if (moveSideMenuTimerRef.current) clearTimeout(moveSideMenuTimerRef.current);
         };
     }, []);
 
@@ -75,7 +84,7 @@ function Sticker({
     return (
         <div
             ref={isBoard ? ref : undefined}
-            className={`${isBoard ? "absolute z-1 h-100 w-100" : "relative w-full h-64"} overflow-hidden shadow-[0_0_12px_#301e42] transition-[opacity,scale,translate] duration-300 ${isMinimizing || isAppearing ? "scale-75 opacity-0 translate-y-10" : ""}`}
+            className={`${isBoard ? "absolute z-1 h-100 w-100" : "relative w-full h-64"} overflow-hidden shadow-[0_0_12px_#301e42] transition-[opacity,scale,translate] duration-300 ${isMinimizing || isMovingSideMenu || isAppearing ? "scale-75 opacity-0 translate-y-10" : ""}`}
             style={isBoard ? { left: positionX, top: positionY, zIndex } : undefined}
             onPointerDown={isBoard ? onActivate(id) : undefined}
         >
@@ -94,6 +103,10 @@ function Sticker({
                             onClick={handleMinimizeClick}
                         />
                     )}
+                    <button
+                        className="mr-1.5 w-3 h-3 bg-(--moveLeftSide) rounded-full cursor-pointer relative before:absolute before:w-[5] before:h-0.5 before:left-[3] before:top-[4] before:rotate-[-45deg] before:bg-black  before:transition-opacity  after:absolute  after:h-0.5 after:w-[5] after:left-[3] after:bottom-[4] after:rotate-45 after:bg-black after:transition-opacity after:opacity-0 before:opacity-0 hover:before:opacity-100 hover:after:opacity-100"
+                        onClick={handleMoveSideMenuClick}
+                    />
                 </div>
                 {isBoard && (
                     <div
