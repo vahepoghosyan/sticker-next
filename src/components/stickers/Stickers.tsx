@@ -1,10 +1,11 @@
 "use client";
 
 import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
-import { useStickerStore } from "@/features/stickers/store";
+import { useStickerStore, type NewSticker } from "@/features/stickers/store";
+import { parseImportValue, type ImportEntry } from "@/features/stickers/import";
 import { useShallow } from "zustand/react/shallow";
 
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import {
     DRAG_MOVE_THRESHOLD,
     MIN_STICKER_X,
@@ -140,6 +141,7 @@ function Stickers() {
 
     const isMobile = useIsMobile();
     const isOnline = useIsOnline();
+    const fileInputRef = useRef<HTMLInputElement>(null);
     useWindowSize();
 
     useEffect(() => {
@@ -228,6 +230,68 @@ function Stickers() {
         });
     }, [addSticker, stickers]);
 
+    const handleImportClick = useCallback(() => {
+        fileInputRef.current?.click();
+    }, []);
+
+    const handleImportFile = useCallback(
+        async (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            if (files.length === 0) return;
+
+            const entries: ImportEntry[] = [];
+            let failedFiles = 0;
+
+            for (const file of files) {
+                try {
+                    entries.push(...parseImportValue(JSON.parse(await file.text())));
+                } catch {
+                    failedFiles += 1;
+                }
+            }
+
+            if (entries.length === 0) {
+                window.alert(
+                    failedFiles > 0
+                        ? `Couldn't read ${failedFiles} file(s) as JSON notes.`
+                        : "No notes found in the selected file(s)."
+                );
+                return;
+            }
+
+            const bounds = getMaxPosition();
+            let highestZIndex = Math.max(0, ...Object.values(stickers).map((item) => item.zIndex));
+
+            entries.forEach((entry, index) => {
+                const offset = index * 24;
+                const fallback = clampPosition(
+                    MIN_STICKER_X + offset,
+                    MIN_STICKER_Y + offset,
+                    bounds
+                );
+                highestZIndex += 1;
+
+                const sticker: NewSticker = {
+                    title: entry.title,
+                    content: entry.content,
+                    positionX: entry.positionX ?? fallback.positionX,
+                    positionY: entry.positionY ?? fallback.positionY,
+                    zIndex: entry.zIndex ?? highestZIndex,
+                };
+
+                addSticker(sticker);
+            });
+
+            if (failedFiles > 0) {
+                window.alert(
+                    `Imported ${entries.length} note(s). ${failedFiles} file(s) couldn't be read.`
+                );
+            }
+        },
+        [addSticker, stickers]
+    );
+
     const visibleStickers = Object.values(stickers).filter(
         (sticker) => sticker.isMinimized !== "true"
     );
@@ -294,17 +358,46 @@ function Stickers() {
                     })}
                 </DragDropProvider>
             )}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                multiple
+                className="hidden"
+                onChange={handleImportFile}
+            />
             <button
-                className={`${isMobile ? "fixed" : "absolute"} z-100 bottom-4 right-4 w-[50px] h-[50px] cursor-pointer hover:opacity-90 before:absolute before:inset-[5px] before:bg-white before:rounded-full before:-z-1`}
-                onClick={handleAdd}
+                className={`${isMobile ? "fixed" : "absolute"} z-100 bottom-[74px] right-4 w-[50px] h-[50px] cursor-pointer hover:opacity-90 bg-(--primary) rounded-full flex items-center justify-center`}
+                onClick={handleImportClick}
+                aria-label="Import notes from JSON"
+                title="Import notes from JSON"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="w-full h-full"
-                    fill="#6d3b9c"
+                    width="25"
+                    height="25"
+                    fill="currentColor"
                     viewBox="0 0 16 16"
                 >
-                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z" />
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z" />
+                </svg>
+            </button>
+            <button
+                className={`${isMobile ? "fixed" : "absolute"} z-100 bottom-4 right-4 w-[50px] h-[50px] cursor-pointer hover:opacity-90 bg-(--primary) rounded-full flex items-center justify-center`}
+                onClick={handleAdd}
+                aria-label="Add sticker"
+                title="Add sticker"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="25"
+                    height="25"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                >
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
                 </svg>
             </button>
             {!isMobile && <Minimized />}
