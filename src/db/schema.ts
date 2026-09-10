@@ -6,6 +6,7 @@ export const notes = pgTable("notes", {
     .$defaultFn(() => crypto.randomUUID()),
   userIdn: text("user_idn").notNull().default(""),
   isMinimized: text("is_minimized").notNull().default("false"),
+  isInSideMenu: text("is_in_side_menu").notNull().default("false"),
   title: text("title").notNull().default(""),
   content: text("content").notNull().default(""),
   zIndex: real("z_index").notNull().default(0),

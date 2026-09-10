@@ -4,6 +4,7 @@ export type Note = {
     content: string;
     color: string;
     isMinimized: string;
+    isInSideMenu: string;
     positionX: number;
     positionY: number;
     zIndex: number;
@@ -15,6 +16,7 @@ export type Sticker = {
     content: string;
     color: string;
     isMinimized: string;
+    isInSideMenu: string;
     positionX: number;
     positionY: number;
     zIndex: number;
@@ -30,4 +32,5 @@ export type StickerProps = Sticker & {
     onContentChange: (id: string) => (content: string) => void;
     onRemove: (id: string) => () => void;
     onMinimize: (id: string) => () => void;
+    onMoveSideMenu: (id: string) => () => void;
 };

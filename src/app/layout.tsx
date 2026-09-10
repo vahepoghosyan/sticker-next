@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Navigation from "@/components/layout/Navbar";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
+import SideMenu from "@/components/sidemenu/SideMenu";
 import "./globals.css";
 
 const inter = Inter({
@@ -37,6 +38,7 @@ export default function RootLayout({
             <body className="min-h-full flex flex-col">
                 <ServiceWorkerRegister />
                 <Navigation />
+                <SideMenu />
                 {children}
             </body>
         </html>
