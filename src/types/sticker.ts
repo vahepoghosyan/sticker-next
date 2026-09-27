@@ -33,4 +33,5 @@ export type StickerProps = Sticker & {
     onRemove: (id: string) => () => void;
     onMinimize: (id: string) => () => void;
     onMoveSideMenu: (id: string) => () => void;
+    scrollRef?: (el: HTMLDivElement | null) => void;
 };
