@@ -58,7 +58,7 @@ async function sendEntry(entry: QueueEntry): Promise<boolean> {
         const res = await fetch("/api/notes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(entry.payload),
+            body: JSON.stringify({ ...entry.payload, clientId: getClientId() }),
         });
         return res.ok || res.status === 409;
     }
@@ -72,7 +72,9 @@ async function sendEntry(entry: QueueEntry): Promise<boolean> {
         return res.ok || res.status === 404;
     }
 
-    const res = await fetch(`/api/notes/${entry.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/notes/${entry.id}?clientId=${encodeURIComponent(getClientId())}`, {
+        method: "DELETE",
+    });
     return res.ok || res.status === 404;
 }
 

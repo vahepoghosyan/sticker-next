@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { notes } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { broadcastCreate } from "@/server/realtime";
 import { eq } from "drizzle-orm";
 
 export async function GET() {
@@ -46,6 +47,23 @@ export async function POST(request: Request) {
         if (!note) {
             return Response.json({ error: "Note already exists" }, { status: 409 });
         }
+
+        const clientId = typeof body.clientId === "string" ? body.clientId : undefined;
+        broadcastCreate(
+            session.user.id,
+            {
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                color: note.color,
+                isMinimized: note.isMinimized,
+                isInSideMenu: note.isInSideMenu,
+                positionX: note.positionX,
+                positionY: note.positionY,
+                zIndex: note.zIndex,
+            },
+            clientId
+        );
 
         return Response.json(note, { status: 201 });
     } catch {

@@ -35,6 +35,7 @@ app.prepare().then(() => {
 
         const secret = process.env.AUTH_SECRET;
         if (!secret) {
+            console.error("[ws] rejecting connection: AUTH_SECRET is not set");
             socket.destroy();
             return;
         }
@@ -42,7 +43,10 @@ app.prepare().then(() => {
         const token = await getToken({
             req: { headers: request.headers as Record<string, string> },
             secret,
-        }).catch(() => null);
+        }).catch((err) => {
+            console.error("[ws] getToken failed:", err);
+            return null;
+        });
 
         const userId = token?.sub;
         if (!userId) {

@@ -1,11 +1,17 @@
+import type { Note } from "@/types/sticker";
+
 const CLIENT_ID = typeof window !== "undefined" ? crypto.randomUUID() : "";
 
-type TextUpdatePayload = { id: string; title?: string; content?: string };
-type TextUpdateHandler = (payload: TextUpdatePayload) => void;
+type UpdatePayload = { id: string } & Partial<Omit<Note, "id">>;
+type RealtimeHandlers = {
+    onCreate: (note: Note) => void;
+    onUpdate: (payload: UpdatePayload) => void;
+    onRemove: (id: string) => void;
+};
 
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-let handler: TextUpdateHandler | null = null;
+let handlers: RealtimeHandlers | null = null;
 
 function connect() {
     if (typeof window === "undefined") return;
@@ -25,8 +31,16 @@ function connect() {
     ws.addEventListener("message", (event) => {
         try {
             const message = JSON.parse(event.data);
-            if (message?.type === "text-update" && handler) {
-                handler({ id: message.id, title: message.title, content: message.content });
+            if (!handlers) return;
+
+            if (message?.type === "create") {
+                const { type: _type, ...note } = message;
+                handlers.onCreate(note as Note);
+            } else if (message?.type === "update") {
+                const { type: _type, ...update } = message;
+                handlers.onUpdate(update as UpdatePayload);
+            } else if (message?.type === "remove") {
+                handlers.onRemove(message.id);
             }
         } catch {
             // ignore malformed messages
@@ -50,10 +64,10 @@ export function getClientId(): string {
     return CLIENT_ID;
 }
 
-export function initRealtimeSync(onTextUpdate: TextUpdateHandler): () => void {
+export function initRealtimeSync(newHandlers: RealtimeHandlers): () => void {
     if (typeof window === "undefined") return () => {};
 
-    handler = onTextUpdate;
+    handlers = newHandlers;
     connect();
 
     window.addEventListener("online", connect);

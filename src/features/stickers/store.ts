@@ -29,7 +29,9 @@ type StickerStore = {
     removeSticker: (id: string) => void;
     fetchStickers: () => Promise<void>;
     syncNow: () => Promise<void>;
-    applyRemoteTextUpdate: (id: string, updates: { title?: string; content?: string }) => void;
+    applyRemoteCreate: (note: Note) => void;
+    applyRemoteUpdate: (id: string, updates: Partial<Omit<Note, "id">>) => void;
+    applyRemoteRemove: (id: string) => void;
 };
 
 async function refreshSyncStatus(set: (partial: Partial<StickerStore>) => void) {
@@ -52,11 +54,17 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
         // even on the signed-out page since the bundle still includes it.
         if (typeof window !== "undefined" && !realtimeInitialized) {
             realtimeInitialized = true;
-            initRealtimeSync((payload) => {
-                useStickerStore.getState().applyRemoteTextUpdate(payload.id, {
-                    title: payload.title,
-                    content: payload.content,
-                });
+            initRealtimeSync({
+                onCreate: (note) => {
+                    useStickerStore.getState().applyRemoteCreate(note);
+                },
+                onUpdate: (payload) => {
+                    const { id, ...updates } = payload;
+                    useStickerStore.getState().applyRemoteUpdate(id, updates);
+                },
+                onRemove: (id) => {
+                    useStickerStore.getState().applyRemoteRemove(id);
+                },
             });
         }
 
@@ -170,10 +178,22 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
         await refreshSyncStatus(set);
     },
 
-    // Applied when another of the user's own tabs/devices saves a text
-    // edit; the data is already persisted server-side (this is just an
-    // echo), so it only updates local state, never the sync queue.
-    applyRemoteTextUpdate: (id, updates) => {
+    // Applied when another of the user's own tabs/devices creates a
+    // sticker; already persisted server-side, so this only writes local
+    // state, never the sync queue. Guarded against the (defensive-only,
+    // since clientId exclusion should already prevent it) case of the
+    // creating tab somehow receiving its own echo.
+    applyRemoteCreate: (note) => {
+        if (get().stickers[note.id]) return;
+        set((state) => ({ stickers: { ...state.stickers, [note.id]: note } }));
+        putSticker(note);
+    },
+
+    // Applied when another of the user's own tabs/devices changes any
+    // field (text, position, color, minimize, side menu, ...); the data is
+    // already persisted server-side (this is just an echo), so it only
+    // updates local state, never the sync queue.
+    applyRemoteUpdate: (id, updates) => {
         set((state) => {
             if (!state.stickers[id]) return state;
             return {
@@ -186,6 +206,21 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
 
         const updated = get().stickers[id];
         if (updated) putSticker(updated);
+    },
+
+    // Applied when another of the user's own tabs/devices deletes a
+    // sticker; already persisted server-side, so this only clears local
+    // state, never the sync queue.
+    applyRemoteRemove: (id) => {
+        set((state) => {
+            const { [id]: _, ...rest } = state.stickers;
+            return { stickers: rest };
+        });
+
+        clearTimeout(flushDebounceTimers[id]);
+        delete flushDebounceTimers[id];
+
+        deleteStickerRecord(id);
     },
 }));
 
