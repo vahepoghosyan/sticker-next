@@ -4,6 +4,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
+import { useEffect } from "react";
 
 const TOOLBAR_BUTTON_CLASS =
     "cursor-pointer rounded px-1.5 py-0.5 text-xs text-white hover:bg-white/10";
@@ -26,6 +27,15 @@ function StickerEditor({
         },
         onUpdate: ({ editor }) => onChange(editor.getHTML()),
     });
+
+    // Reflect a remote text update (from another tab/device, via
+    // applyRemoteTextUpdate) live, but never while this editor is the one
+    // actively being typed in - that would fight the local cursor.
+    useEffect(() => {
+        if (!editor || editor.isFocused) return;
+        if (editor.getHTML() === content) return;
+        editor.commands.setContent(content, { emitUpdate: false });
+    }, [editor, content]);
 
     return (
         <div className="flex h-[calc(100%-34px)] flex-col border-2 border-t-0 border-[rgba(70,74,84,0.34)] bg-[#1b1d1d82] backdrop-blur-[10px]">

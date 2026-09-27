@@ -8,8 +8,10 @@ import {
     replaceAllStickers,
 } from "./offline-db";
 import { queueCreate, queueUpdate, queueDelete, flushQueue, hasPendingSync } from "./sync";
+import { initRealtimeSync } from "@/features/realtime/client";
 
 const flushDebounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+let realtimeInitialized = false;
 
 export type Stickers = Record<string, Note>;
 
@@ -27,6 +29,7 @@ type StickerStore = {
     removeSticker: (id: string) => void;
     fetchStickers: () => Promise<void>;
     syncNow: () => Promise<void>;
+    applyRemoteTextUpdate: (id: string, updates: { title?: string; content?: string }) => void;
 };
 
 async function refreshSyncStatus(set: (partial: Partial<StickerStore>) => void) {
@@ -43,6 +46,20 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
     isSyncing: false,
 
     fetchStickers: async () => {
+        // Only signed-in sessions ever call fetchStickers (Stickers.tsx only
+        // mounts when authenticated), so this is a safe, one-time place to
+        // open the realtime connection - unlike module load, which happens
+        // even on the signed-out page since the bundle still includes it.
+        if (typeof window !== "undefined" && !realtimeInitialized) {
+            realtimeInitialized = true;
+            initRealtimeSync((payload) => {
+                useStickerStore.getState().applyRemoteTextUpdate(payload.id, {
+                    title: payload.title,
+                    content: payload.content,
+                });
+            });
+        }
+
         const local = await getAllStickers();
         if (local.length > 0) {
             set({
@@ -151,6 +168,24 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
     syncNow: async () => {
         await flushQueue();
         await refreshSyncStatus(set);
+    },
+
+    // Applied when another of the user's own tabs/devices saves a text
+    // edit; the data is already persisted server-side (this is just an
+    // echo), so it only updates local state, never the sync queue.
+    applyRemoteTextUpdate: (id, updates) => {
+        set((state) => {
+            if (!state.stickers[id]) return state;
+            return {
+                stickers: {
+                    ...state.stickers,
+                    [id]: { ...state.stickers[id], ...updates },
+                },
+            };
+        });
+
+        const updated = get().stickers[id];
+        if (updated) putSticker(updated);
     },
 }));
 

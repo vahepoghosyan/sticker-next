@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { notes } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { broadcastTextUpdate } from "@/server/realtime";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
@@ -50,6 +51,15 @@ export async function PATCH(
 
     if (!updated) {
         return Response.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (updates.title !== undefined || updates.content !== undefined) {
+        const clientId = typeof body.clientId === "string" ? body.clientId : undefined;
+        broadcastTextUpdate(
+            session.user.id,
+            { id, title: updated.title, content: updated.content },
+            clientId
+        );
     }
 
     return Response.json(updated);
