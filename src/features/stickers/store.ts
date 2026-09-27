@@ -8,8 +8,10 @@ import {
     replaceAllStickers,
 } from "./offline-db";
 import { queueCreate, queueUpdate, queueDelete, flushQueue, hasPendingSync } from "./sync";
+import { initRealtimeSync } from "@/features/realtime/client";
 
 const flushDebounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+let realtimeInitialized = false;
 
 export type Stickers = Record<string, Note>;
 
@@ -27,6 +29,9 @@ type StickerStore = {
     removeSticker: (id: string) => void;
     fetchStickers: () => Promise<void>;
     syncNow: () => Promise<void>;
+    applyRemoteCreate: (note: Note) => void;
+    applyRemoteUpdate: (id: string, updates: Partial<Omit<Note, "id">>) => void;
+    applyRemoteRemove: (id: string) => void;
 };
 
 async function refreshSyncStatus(set: (partial: Partial<StickerStore>) => void) {
@@ -43,6 +48,26 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
     isSyncing: false,
 
     fetchStickers: async () => {
+        // Only signed-in sessions ever call fetchStickers (Stickers.tsx only
+        // mounts when authenticated), so this is a safe, one-time place to
+        // open the realtime connection - unlike module load, which happens
+        // even on the signed-out page since the bundle still includes it.
+        if (typeof window !== "undefined" && !realtimeInitialized) {
+            realtimeInitialized = true;
+            initRealtimeSync({
+                onCreate: (note) => {
+                    useStickerStore.getState().applyRemoteCreate(note);
+                },
+                onUpdate: (payload) => {
+                    const { id, ...updates } = payload;
+                    useStickerStore.getState().applyRemoteUpdate(id, updates);
+                },
+                onRemove: (id) => {
+                    useStickerStore.getState().applyRemoteRemove(id);
+                },
+            });
+        }
+
         const local = await getAllStickers();
         if (local.length > 0) {
             set({
@@ -151,6 +176,51 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
     syncNow: async () => {
         await flushQueue();
         await refreshSyncStatus(set);
+    },
+
+    // Applied when another of the user's own tabs/devices creates a
+    // sticker; already persisted server-side, so this only writes local
+    // state, never the sync queue. Guarded against the (defensive-only,
+    // since clientId exclusion should already prevent it) case of the
+    // creating tab somehow receiving its own echo.
+    applyRemoteCreate: (note) => {
+        if (get().stickers[note.id]) return;
+        set((state) => ({ stickers: { ...state.stickers, [note.id]: note } }));
+        putSticker(note);
+    },
+
+    // Applied when another of the user's own tabs/devices changes any
+    // field (text, position, color, minimize, side menu, ...); the data is
+    // already persisted server-side (this is just an echo), so it only
+    // updates local state, never the sync queue.
+    applyRemoteUpdate: (id, updates) => {
+        set((state) => {
+            if (!state.stickers[id]) return state;
+            return {
+                stickers: {
+                    ...state.stickers,
+                    [id]: { ...state.stickers[id], ...updates },
+                },
+            };
+        });
+
+        const updated = get().stickers[id];
+        if (updated) putSticker(updated);
+    },
+
+    // Applied when another of the user's own tabs/devices deletes a
+    // sticker; already persisted server-side, so this only clears local
+    // state, never the sync queue.
+    applyRemoteRemove: (id) => {
+        set((state) => {
+            const { [id]: _, ...rest } = state.stickers;
+            return { stickers: rest };
+        });
+
+        clearTimeout(flushDebounceTimers[id]);
+        delete flushDebounceTimers[id];
+
+        deleteStickerRecord(id);
     },
 }));
 

@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { notes } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { broadcastRemove, broadcastUpdate } from "@/server/realtime";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
@@ -52,11 +53,14 @@ export async function PATCH(
         return Response.json({ error: "Not found" }, { status: 404 });
     }
 
+    const clientId = typeof body.clientId === "string" ? body.clientId : undefined;
+    broadcastUpdate(session.user.id, { id, ...updates }, clientId);
+
     return Response.json(updated);
 }
 
 export async function DELETE(
-    _request: NextRequest,
+    request: NextRequest,
     ctx: { params: Promise<{ id: string }> }
 ) {
     const session = await auth();
@@ -74,6 +78,9 @@ export async function DELETE(
     if (!deleted) {
         return Response.json({ error: "Not found" }, { status: 404 });
     }
+
+    const clientId = request.nextUrl.searchParams.get("clientId") ?? undefined;
+    broadcastRemove(session.user.id, id, clientId);
 
     return Response.json({ success: true });
 }
