@@ -3,6 +3,7 @@
 import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
 import { useStickerStore, type NewSticker } from "@/features/stickers/store";
 import { parseImportValue, type ImportEntry } from "@/features/stickers/import";
+import { useScrollTargetStore } from "@/features/stickers/scroll-target";
 import { useShallow } from "zustand/react/shallow";
 
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
@@ -142,11 +143,30 @@ function Stickers() {
     const isMobile = useIsMobile();
     const isOnline = useIsOnline();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const stickerRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const pendingScrollId = useScrollTargetStore((s) => s.pendingId);
+    const clearScroll = useScrollTargetStore((s) => s.clearScroll);
     useWindowSize();
 
     useEffect(() => {
         fetchStickers();
     }, [fetchStickers]);
+
+    // Scrolls a just-added or just-restored-from-the-side-menu sticker into
+    // view on mobile, where stickers are a plain vertical stack rather than
+    // free-positioned - re-checks whenever `stickers` changes since the
+    // target element may not exist in the DOM yet on the render where the
+    // scroll was requested (e.g. a side-menu restore needs isInSideMenu to
+    // flip before the sticker re-enters the mobile list at all).
+    useEffect(() => {
+        if (!isMobile || !pendingScrollId) return;
+
+        const el = stickerRefs.current[pendingScrollId];
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            clearScroll();
+        }
+    }, [isMobile, pendingScrollId, stickers, clearScroll]);
 
     const bringToFront = useCallback(
         (id: string) => () => {
@@ -228,14 +248,18 @@ function Stickers() {
         const y = 73;
         const highestZIndex = Math.max(0, ...Object.values(stickers).map((item) => item.zIndex));
 
-        addSticker({
+        const id = addSticker({
             title: "New Sticker",
             content: "",
             positionX: x,
             positionY: y,
             zIndex: highestZIndex + 1,
         });
-    }, [addSticker, stickers]);
+
+        if (isMobile) {
+            useScrollTargetStore.getState().requestScroll(id);
+        }
+    }, [addSticker, stickers, isMobile]);
 
     const handleImportClick = useCallback(() => {
         fileInputRef.current?.click();
@@ -339,6 +363,9 @@ function Stickers() {
                             onRemove={handleRemove}
                             onMinimize={handleMinimize}
                             onMoveSideMenu={handleMoveSideMenu}
+                            scrollRef={(el) => {
+                                stickerRefs.current[sticker.id] = el;
+                            }}
                         />
                     ))}
                 </div>

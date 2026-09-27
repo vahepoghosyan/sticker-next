@@ -2,6 +2,7 @@
 
 import { useStickerStore } from "@/features/stickers/store";
 import { useSideMenuStore } from "@/features/sidemenu/store";
+import { useScrollTargetStore } from "@/features/stickers/scroll-target";
 import { useShallow } from "zustand/react/shallow";
 
 function SideMenu() {
@@ -26,6 +27,7 @@ function SideMenu() {
             ...Object.values(stickers).map((sticker) => sticker.zIndex)
         );
         updateSticker(id, { isInSideMenu: "false", zIndex: highestZIndex + 1 });
+        useScrollTargetStore.getState().requestScroll(id);
         close();
     };
 
