@@ -40,9 +40,22 @@ app.prepare().then(() => {
             return;
         }
 
+        // getToken() picks the session cookie's name based on this - NextAuth
+        // issues it as __Secure-authjs.session-token over HTTPS and plain
+        // authjs.session-token over HTTP. Left unset it defaults to false,
+        // which only happens to be correct in local dev (plain HTTP);
+        // in production (HTTPS, behind Cloudflare/a reverse proxy) it would
+        // look up the wrong cookie name and silently reject every real
+        // session. x-forwarded-proto reflects the original client-facing
+        // protocol when proxied; !dev is the fallback for a direct request.
+        const forwardedProto = request.headers["x-forwarded-proto"];
+        const secureCookie =
+            (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) === "https" || !dev;
+
         const token = await getToken({
             req: { headers: request.headers as Record<string, string> },
             secret,
+            secureCookie,
         }).catch((err) => {
             console.error("[ws] getToken failed:", err);
             return null;
