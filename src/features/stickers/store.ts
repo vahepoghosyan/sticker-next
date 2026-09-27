@@ -24,7 +24,7 @@ type StickerStore = {
     stickers: Stickers;
     isLoading: boolean;
     isSyncing: boolean;
-    addSticker: (sticker: NewSticker) => void;
+    addSticker: (sticker: NewSticker) => string;
     updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) => void;
     removeSticker: (id: string) => void;
     fetchStickers: () => Promise<void>;
@@ -130,6 +130,8 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
         putSticker(note)
             .then(() => queueCreate(note))
             .then(() => triggerFlush(set));
+
+        return id;
     },
 
     updateSticker: (id: string, updates: Partial<Omit<Note, "id">>) => {

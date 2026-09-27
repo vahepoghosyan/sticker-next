@@ -19,6 +19,7 @@ function Sticker({
     onRemove,
     onMinimize,
     onMoveSideMenu,
+    scrollRef,
 }: StickerProps) {
     const isBoard = layout === "board";
     const [isTitleEditEnabled, setIsTitleEditEnabled] = useState<boolean>(false);
@@ -83,7 +84,7 @@ function Sticker({
 
     return (
         <div
-            ref={isBoard ? ref : undefined}
+            ref={isBoard ? ref : scrollRef}
             className={`${isBoard ? "absolute z-1 h-100 w-100" : "relative w-full h-64"} overflow-hidden shadow-[0_0_12px_#301e42] transition-[opacity,scale,translate] duration-300 ${isMinimizing || isMovingSideMenu || isAppearing ? "scale-75 opacity-0 translate-y-10" : ""}`}
             style={isBoard ? { left: positionX, top: positionY, zIndex } : undefined}
             onPointerDown={isBoard ? onActivate(id) : undefined}
