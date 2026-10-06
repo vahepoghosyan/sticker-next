@@ -95,7 +95,10 @@ function Sticker({
                 className="relative flex items-center bg-(--primary) px-2.5 py-1.25"
                 ref={titleWrapperRef}
             >
-                <div className="panel-buttons relative z-10 flex items-center font-size-0">
+                <div
+                    className="panel-buttons relative z-10 flex items-center font-size-0"
+                    onPointerDown={(e) => e.stopPropagation()}
+                >
                     <button
                         className="mr-1.5 w-3 h-3 bg-(--removeNote) rounded-full cursor-pointer relative before:absolute before:top-1/2 before:-translate-y-1/2 before:left-[50%] before:-translate-x-1/2 before:w-2 before:h-0.5 before:bg-black before:opacity-0 before:transition-opacity before:rotate-45 after:absolute after:top-1/2 after:-translate-y-1/2 after:left-[50%] after:-translate-x-1/2 after:w-0.5 after:h-2 after:bg-black after:opacity-0 after:transition-opacity after:rotate-45 hover:before:opacity-100 hover:after:opacity-100"
                         onClick={onRemove(id)}
@@ -135,6 +138,7 @@ function Sticker({
                     }`}
                     aria-label={isShared === "true" ? "Unshare sticker" : "Share sticker"}
                     title={isShared === "true" ? "Shared - click to stop sharing" : "Share this sticker"}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={onShare(id)}
                 >
                     <svg
@@ -151,6 +155,7 @@ function Sticker({
                     type="button"
                     className="relative z-10 h-[24px] w-[24px] flex cursor-pointer justify-center items-center text-white"
                     aria-label="Edit sticker"
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={toggleEditingTitle}
                 >
                     {!isTitleEditEnabled ? (

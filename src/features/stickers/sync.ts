@@ -9,48 +9,71 @@ import {
 
 let flushInFlight: Promise<void> | null = null;
 
-export async function queueCreate(note: Note): Promise<void> {
-    await setQueueEntry({ id: note.id, type: "create", payload: note });
+// queueCreate/queueUpdate/queueDelete each do a read-then-write against the
+// same IndexedDB queue record for a given sticker id, with no transaction
+// spanning the two - two calls for the same id (e.g. a stray zIndex bump
+// racing the actual delete when a click bubbles into both handlers) could
+// both read the queue before either writes back, and whichever write lands
+// last silently wins, losing the other's intent entirely. Serializing calls
+// per id removes that window: each call now waits for the previous one for
+// the same id to fully finish before it even reads the queue.
+const idLocks = new Map<string, Promise<unknown>>();
+
+function withIdLock<T>(id: string, run: () => Promise<T>): Promise<T> {
+    const prior = idLocks.get(id) ?? Promise.resolve();
+    const settled = prior.then(run, run);
+    idLocks.set(
+        id,
+        settled.catch(() => undefined)
+    );
+    return settled;
 }
 
-export async function queueUpdate(
-    id: string,
-    updates: Partial<Omit<Note, "id">>
-): Promise<void> {
-    const queue = await getQueue();
-    const existing = queue.find((entry) => entry.id === id);
-
-    if (existing?.type === "create") {
-        await setQueueEntry({
-            id,
-            type: "create",
-            payload: { ...existing.payload, ...updates },
-        });
-        return;
-    }
-
-    if (existing?.type === "update") {
-        await setQueueEntry({
-            id,
-            type: "update",
-            payload: { ...existing.payload, ...updates },
-        });
-        return;
-    }
-
-    await setQueueEntry({ id, type: "update", payload: updates });
+export function queueCreate(note: Note): Promise<void> {
+    return withIdLock(note.id, async () => {
+        await setQueueEntry({ id: note.id, type: "create", payload: note });
+    });
 }
 
-export async function queueDelete(id: string): Promise<void> {
-    const queue = await getQueue();
-    const existing = queue.find((entry) => entry.id === id);
+export function queueUpdate(id: string, updates: Partial<Omit<Note, "id">>): Promise<void> {
+    return withIdLock(id, async () => {
+        const queue = await getQueue();
+        const existing = queue.find((entry) => entry.id === id);
 
-    if (existing?.type === "create") {
-        await deleteQueueEntry(id);
-        return;
-    }
+        if (existing?.type === "create") {
+            await setQueueEntry({
+                id,
+                type: "create",
+                payload: { ...existing.payload, ...updates },
+            });
+            return;
+        }
 
-    await setQueueEntry({ id, type: "delete" });
+        if (existing?.type === "update") {
+            await setQueueEntry({
+                id,
+                type: "update",
+                payload: { ...existing.payload, ...updates },
+            });
+            return;
+        }
+
+        await setQueueEntry({ id, type: "update", payload: updates });
+    });
+}
+
+export function queueDelete(id: string): Promise<void> {
+    return withIdLock(id, async () => {
+        const queue = await getQueue();
+        const existing = queue.find((entry) => entry.id === id);
+
+        if (existing?.type === "create") {
+            await deleteQueueEntry(id);
+            return;
+        }
+
+        await setQueueEntry({ id, type: "delete" });
+    });
 }
 
 async function sendEntry(entry: QueueEntry): Promise<boolean> {
