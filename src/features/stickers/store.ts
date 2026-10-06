@@ -123,6 +123,7 @@ export const useStickerStore = create<StickerStore>((set, get) => ({
             color: "#ffffff",
             isMinimized: "false",
             isInSideMenu: "false",
+            isShared: "false",
         };
 
         set((state) => ({ stickers: { ...state.stickers, [id]: note } }));

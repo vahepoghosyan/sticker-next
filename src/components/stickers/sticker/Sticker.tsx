@@ -19,6 +19,8 @@ function Sticker({
     onRemove,
     onMinimize,
     onMoveSideMenu,
+    onShare,
+    isShared,
     scrollRef,
 }: StickerProps) {
     const isBoard = layout === "board";
@@ -126,6 +128,25 @@ function Sticker({
                         onChange={onUpdate(id, "title")}
                     />
                 </div>
+                <button
+                    type="button"
+                    className={`relative z-10 h-[24px] w-[24px] flex cursor-pointer justify-center items-center ${
+                        isShared === "true" ? "text-(--secondary)" : "text-white"
+                    }`}
+                    aria-label={isShared === "true" ? "Unshare sticker" : "Share sticker"}
+                    title={isShared === "true" ? "Shared - click to stop sharing" : "Share this sticker"}
+                    onClick={onShare(id)}
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                    >
+                        <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5" />
+                    </svg>
+                </button>
                 <button
                     type="button"
                     className="relative z-10 h-[24px] w-[24px] flex cursor-pointer justify-center items-center text-white"
