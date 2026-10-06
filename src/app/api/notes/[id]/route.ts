@@ -39,6 +39,12 @@ export async function PATCH(
         updates.isInSideMenu = body.isInSideMenu;
     }
 
+    if (typeof body.isShared === "boolean") {
+        updates.isShared = body.isShared ? "true" : "false";
+    } else if (body.isShared === "true" || body.isShared === "false") {
+        updates.isShared = body.isShared;
+    }
+
     if (Object.keys(updates).length === 0) {
         return Response.json({ error: "No valid fields to update" }, { status: 400 });
     }

@@ -5,6 +5,7 @@ export type Note = {
     color: string;
     isMinimized: string;
     isInSideMenu: string;
+    isShared: string;
     positionX: number;
     positionY: number;
     zIndex: number;
@@ -17,6 +18,7 @@ export type Sticker = {
     color: string;
     isMinimized: string;
     isInSideMenu: string;
+    isShared: string;
     positionX: number;
     positionY: number;
     zIndex: number;
@@ -33,5 +35,6 @@ export type StickerProps = Sticker & {
     onRemove: (id: string) => () => void;
     onMinimize: (id: string) => () => void;
     onMoveSideMenu: (id: string) => () => void;
+    onShare: (id: string) => () => void;
     scrollRef?: (el: HTMLDivElement | null) => void;
 };

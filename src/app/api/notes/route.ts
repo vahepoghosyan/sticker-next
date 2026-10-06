@@ -58,6 +58,7 @@ export async function POST(request: Request) {
                 color: note.color,
                 isMinimized: note.isMinimized,
                 isInSideMenu: note.isInSideMenu,
+                isShared: note.isShared,
                 positionX: note.positionX,
                 positionY: note.positionY,
                 zIndex: note.zIndex,
