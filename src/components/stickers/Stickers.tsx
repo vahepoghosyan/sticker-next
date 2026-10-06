@@ -243,6 +243,29 @@ function Stickers() {
         [updateSticker]
     );
 
+    const handleShare = useCallback(
+        (id: string) => () => {
+            const isCurrentlyShared = stickers[id]?.isShared === "true";
+            updateSticker(id, { isShared: isCurrentlyShared ? "false" : "true" });
+
+            if (isCurrentlyShared) {
+                window.alert("This sticker is no longer shared.");
+                return;
+            }
+
+            const url = `${window.location.origin}/share/${id}`;
+            navigator.clipboard
+                .writeText(url)
+                .then(() => {
+                    window.alert("Link copied! Anyone with this link can view this sticker.");
+                })
+                .catch(() => {
+                    window.prompt("Copy this link to share the sticker:", url);
+                });
+        },
+        [stickers, updateSticker]
+    );
+
     const handleAdd = useCallback(() => {
         const x = 16;
         const y = 73;
@@ -356,6 +379,7 @@ function Stickers() {
                             color={sticker.color}
                             isMinimized={sticker.isMinimized}
                             isInSideMenu={sticker.isInSideMenu}
+                            isShared={sticker.isShared}
                             layout="stack"
                             onActivate={bringToFront}
                             onUpdate={handleUpdate}
@@ -363,6 +387,7 @@ function Stickers() {
                             onRemove={handleRemove}
                             onMinimize={handleMinimize}
                             onMoveSideMenu={handleMoveSideMenu}
+                            onShare={handleShare}
                             scrollRef={(el) => {
                                 stickerRefs.current[sticker.id] = el;
                             }}
@@ -386,6 +411,7 @@ function Stickers() {
                                 color={sticker.color}
                                 isMinimized={sticker.isMinimized}
                                 isInSideMenu={sticker.isInSideMenu}
+                                isShared={sticker.isShared}
                                 layout="board"
                                 onActivate={bringToFront}
                                 onUpdate={handleUpdate}
@@ -393,6 +419,7 @@ function Stickers() {
                                 onRemove={handleRemove}
                                 onMinimize={handleMinimize}
                                 onMoveSideMenu={handleMoveSideMenu}
+                                onShare={handleShare}
                             />
                         );
                     })}
