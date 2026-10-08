@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Navigation from "@/components/layout/Navbar";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import SideMenu from "@/components/sidemenu/SideMenu";
+import ToastContainer from "@/components/toast/ToastContainer";
 import "./globals.css";
 
 const inter = Inter({
@@ -39,6 +40,7 @@ export default function RootLayout({
                 <ServiceWorkerRegister />
                 <Navigation />
                 <SideMenu />
+                <ToastContainer />
                 {children}
             </body>
         </html>

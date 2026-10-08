@@ -4,6 +4,7 @@ import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
 import { useStickerStore, type NewSticker } from "@/features/stickers/store";
 import { parseImportValue, type ImportEntry } from "@/features/stickers/import";
 import { useScrollTargetStore } from "@/features/stickers/scroll-target";
+import { useToastStore } from "@/features/toast/store";
 import { useShallow } from "zustand/react/shallow";
 
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
@@ -249,7 +250,7 @@ function Stickers() {
             updateSticker(id, { isShared: isCurrentlyShared ? "false" : "true" });
 
             if (isCurrentlyShared) {
-                window.alert("This sticker is no longer shared.");
+                useToastStore.getState().show("This sticker is no longer shared.", "info");
                 return;
             }
 
@@ -257,10 +258,14 @@ function Stickers() {
             navigator.clipboard
                 .writeText(url)
                 .then(() => {
-                    window.alert("Link copied! Anyone with this link can view this sticker.");
+                    useToastStore
+                        .getState()
+                        .show("Link copied! Anyone with this link can view this sticker.", "success");
                 })
                 .catch(() => {
-                    window.prompt("Copy this link to share the sticker:", url);
+                    useToastStore
+                        .getState()
+                        .show(`Couldn't copy automatically. Link: ${url}`, "error", 8000);
                 });
         },
         [stickers, updateSticker]
@@ -306,11 +311,14 @@ function Stickers() {
             }
 
             if (entries.length === 0) {
-                window.alert(
-                    failedFiles > 0
-                        ? `Couldn't read ${failedFiles} file(s) as JSON notes.`
-                        : "No notes found in the selected file(s)."
-                );
+                useToastStore
+                    .getState()
+                    .show(
+                        failedFiles > 0
+                            ? `Couldn't read ${failedFiles} file(s) as JSON notes.`
+                            : "No notes found in the selected file(s).",
+                        "error"
+                    );
                 return;
             }
 
@@ -338,9 +346,12 @@ function Stickers() {
             });
 
             if (failedFiles > 0) {
-                window.alert(
-                    `Imported ${entries.length} note(s). ${failedFiles} file(s) couldn't be read.`
-                );
+                useToastStore
+                    .getState()
+                    .show(
+                        `Imported ${entries.length} note(s). ${failedFiles} file(s) couldn't be read.`,
+                        "error"
+                    );
             }
         },
         [addSticker, stickers]
